@@ -61,7 +61,7 @@ function renderPlaces() {
 async function renderReports() {
   if (!reportList) return;
 
-  // Тянем отчеты из Supabase вместо localStorage
+  // Тянем отчеты из Supabase
   const { data: reports, error } = await supabase
     .from('reports')
     .select('*')
@@ -102,75 +102,6 @@ async function renderReports() {
   });
 }
 
-  reports.forEach((report) => {
-    const item = document.createElement("li");
-    item.className = "report-item";
-    const commentItems = (report.comments || [])
-      .map((comment) => `<li><strong>${comment.author}:</strong> ${comment.text}</li>`)
-      .join("");
-    const statusClass = report.status === "completed"
-      ? "status-completed"
-      : report.status === "in_progress"
-        ? "status-progress"
-        : "status-open";
-    item.innerHTML = `
-      <strong>${report.location}</strong>
-      <p>${report.address}</p>
-      <p>${report.description}</p>
-      ${report.photo ? `<img class="report-media" src="${report.photo}" alt="Report photo">` : ""}
-      <div class="report-meta">
-        <span class="badge">By: ${report.reporter || "Anonymous"}</span>
-        <span class="badge ${statusClass}">Status: ${report.status.replace("_", " ")}</span>
-      </div>
-      <div class="report-actions">
-        <label>
-          <span class="badge">Update status</span>
-          <select class="status-select" data-id="${report.id}">
-            <option value="open" ${report.status === "open" ? "selected" : ""}>Open</option>
-            <option value="in_progress" ${report.status === "in_progress" ? "selected" : ""}>In progress</option>
-            <option value="completed" ${report.status === "completed" ? "selected" : ""}>Completed</option>
-          </select>
-        </label>
-      </div>
-      <ul class="comment-list">${commentItems || "<li>No comments yet.</li>"}</ul>
-      <form class="comment-form" data-id="${report.id}">
-        <input type="text" placeholder="Add comment..." required />
-        <button class="btn btn-ghost small" type="submit">Send</button>
-      </form>
-    `;
-    reportList.appendChild(item);
-  });
-
-  reportList.querySelectorAll(".status-select").forEach((select) => {
-    select.addEventListener("change", () => {
-      const reportsData = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      const target = reportsData.find((r) => r.id === Number(select.dataset.id));
-      if (!target) return;
-      target.status = select.value;
-      localStorage.setItem(storageKey, JSON.stringify(reportsData));
-      renderReports();
-      renderAchievements();
-    });
-  });
-
-  reportList.querySelectorAll(".comment-form").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const reportsData = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      const target = reportsData.find((r) => r.id === Number(form.dataset.id));
-      const input = form.querySelector("input");
-      if (!target || !input.value.trim()) return;
-      const currentUser = JSON.parse(localStorage.getItem(currentUserKey) || "null");
-      target.comments = target.comments || [];
-      target.comments.push({
-        author: currentUser?.name || "Anonymous",
-        text: input.value.trim(),
-      });
-      localStorage.setItem(storageKey, JSON.stringify(reportsData));
-      renderReports();
-    });
-  });
-}
 
 function renderAchievements() {
   if (!topContributors || !achievementSummary) return;
