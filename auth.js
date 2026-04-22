@@ -1,7 +1,7 @@
 // === 1. ИНИЦИАЛИЗАЦИЯ SUPABASE ===
 // Вставь сюда свои ключи из настроек проекта Supabase
-const supabaseUrl = 'ТВОЙ_SUPABASE_URL';
-const supabaseKey = 'ТВОЙ_SUPABASE_ANON_KEY';
+const supabaseUrl = 'https://fdxnoirzzmmhqexhrttn.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Вспомогательные функции (оставляем как было)
