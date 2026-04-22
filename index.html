@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoShymkent | City Ecology Awareness</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#home">EcoShymkent</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open navigation menu">Menu</button>
+      <nav class="site-nav" id="siteNav">
+        <a href="#about">About</a>
+        <a href="#map">City Map</a>
+        <a href="#recycling">Recycling Points</a>
+        <a href="#orgs">Eco Organizations</a>
+        <a href="#report">Report Pollution</a>
+        <a href="#achievements">Achievements</a>
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">EcoShymkent</p>
+          <h1>Cleaner Shymkent through practical local action.</h1>
+          <p class="hero-copy">
+            Use verified collection points, report illegal dumping with photos, and track community cleanup progress in one place.
+          </p>
+          <div class="mini-stats">
+            <div class="stat"><strong>6+</strong> points</div>
+            <div class="stat"><strong>4</strong> organizations</div>
+            <div class="stat"><strong>Live</strong> reports</div>
+          </div>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#map">Map</a>
+            <a class="btn btn-ghost" href="#report">Report</a>
+          </div>
+        </div>
+        <aside class="hero-card">
+          <h2>Quick Start</h2>
+          <ul>
+            <li>Open the map and check nearby recycling locations.</li>
+            <li>Review what each point accepts before you visit.</li>
+            <li>Report polluted places and follow their status updates.</li>
+          </ul>
+          <div class="hero-actions">
+            <a class="btn btn-primary small" href="register.html">Join Community</a>
+            <a class="btn btn-ghost small dark-ghost" href="profile.html">My Profile</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="about">
+      <div class="container">
+        <h2>About</h2>
+        <p>
+          EcoShymkent is a city-focused platform that helps residents reduce landfill waste, support recycling, and report local pollution problems.
+          The goal is simple: make ecological action easier, visible, and community-driven.
+        </p>
+      </div>
+    </section>
+
+    <section class="section alt" id="map">
+      <div class="container">
+        <h2>Map of Shymkent</h2>
+        <p>
+          The map highlights material collection and recycling-related locations across Shymkent.
+          Open any marker to see the location name and address, then use the list below for a quick overview.
+        </p>
+        <div class="map-frame card" id="cityMap"></div>
+        <div class="card">
+          <h3>Mapped Collection Points</h3>
+          <ul id="placesList" class="places-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="recycling">
+      <div class="container">
+        <h2>Recycling Points</h2>
+        <p>
+          These locations accept different recyclable materials such as paper, plastics, glass, cans, and scrap metal.
+          Confirm opening hours by phone before visiting.
+        </p>
+        <div class="overview-grid">
+          <article class="card">
+            <h3>Secondary Raw Materials Point</h3>
+            <p><strong>Address:</strong> 56 Kaldaiakov Street, Shymkent</p>
+            <p>Paper, plastic, glass, cans, PET</p>
+          </article>
+          <article class="card">
+            <h3>Korkem Plast Collection Point</h3>
+            <p><strong>Address:</strong> 20B/7 Tamerlanovskoye Highway, Shymkent</p>
+            <p>Sorted recyclables</p>
+          </article>
+          <article class="card">
+            <h3>Makulatura Center (IP Ksemaks)</h3>
+            <p><strong>Address:</strong> 117/1 Ilyaev Street, Shymkent</p>
+            <p>Paper, cans, batteries</p>
+          </article>
+          <article class="card">
+            <h3>Recycling Point (Yntymak)</h3>
+            <p><strong>Address:</strong> 47/7 Yntymak, Shymkent</p>
+            <p>Common recyclables</p>
+          </article>
+          <article class="card">
+            <h3>Category DM Waste Utilization</h3>
+            <p><strong>Address:</strong> 86 Gani Ilyaev Street, Shymkent</p>
+            <p>Utilization services</p>
+          </article>
+          <article class="card">
+            <h3>KazMetalTrade</h3>
+            <p><strong>Address:</strong> 26 Cement Plant Site, Shymkent</p>
+            <p>Scrap metal</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="orgs">
+      <div class="container">
+        <h2>Organizations</h2>
+        <p>
+          These organizations support civic engagement, volunteer action, and environmental programs in Shymkent.
+          Use this section to find partners for awareness campaigns and community cleanups.
+        </p>
+        <div class="overview-grid">
+          <article class="card">
+            <h3>PA Bereke (Shymkent)</h3>
+            <p>Community development NGO focused on local participation and social initiatives.</p>
+          </article>
+          <article class="card">
+            <h3>Sana Sezim Volunteer Club</h3>
+            <p>Volunteer network in Shymkent organizing youth actions and public awareness campaigns.</p>
+          </article>
+          <article class="card">
+            <h3>NPI Ecology of the Future (Shymkent branch)</h3>
+            <p>Environmental project institute working on ecological documentation and sustainability services.</p>
+          </article>
+          <article class="card">
+            <h3>Shymkent Youth Resource Center</h3>
+            <p>City youth center that supports civic projects, local initiatives, and social engagement.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="report">
+      <div class="container">
+        <h2>Report Pollution</h2>
+        <p>
+          Submit a report when you see illegal dumping, unmanaged rubbish, or heavily polluted spaces.
+          Add a photo and location details so others can verify, comment, and track progress.
+        </p>
+        <div class="two-col">
+          <article class="card">
+            <form id="reportForm">
+              <label>Location
+                <input type="text" id="locationName" required placeholder="Area or place" />
+              </label>
+              <label>Address
+                <input type="text" id="locationAddress" required placeholder="Street or coordinates" />
+              </label>
+              <label>Description
+                <textarea id="locationDesc" rows="4" required placeholder="What is polluted here?"></textarea>
+              </label>
+              <label>Photo
+                <input type="file" id="locationPhoto" accept="image/*" />
+              </label>
+              <label>Your Name (optional)
+                <input type="text" id="reporterName" placeholder="Name" />
+              </label>
+              <button class="btn btn-primary" type="submit">Submit Report</button>
+            </form>
+          </article>
+          <article class="card">
+            <h3>Community Reports</h3>
+            <p>Each report includes status updates and comments from residents.</p>
+            <ul id="reportList" class="report-list">
+              <li>No reports yet. Be the first to add one.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="achievements">
+      <div class="container">
+        <h2>People Achievements</h2>
+        <p>
+          This board highlights active contributors and gives a transparent snapshot of completed vs ongoing reports.
+          It helps communities recognize impact and keep momentum.
+        </p>
+        <div class="overview-grid" id="achievementBoard">
+          <article class="card">
+            <h3>Top Contributors</h3>
+            <ul id="topContributors" class="places-list"></ul>
+          </article>
+          <article class="card">
+            <h3>Progress Snapshot</h3>
+            <p id="achievementSummary">No activity yet.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>EcoShymkent | Citizen Ecology Awareness Platform</p>
+      <a href="#home">Back to top</a>
+    </div>
+  </footer>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

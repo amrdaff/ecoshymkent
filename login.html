@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | EcoShymkent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-shell">
+      <article class="auth-side">
+        <p class="eyebrow auth-eyebrow">Welcome Back</p>
+        <h1>Continue your city impact</h1>
+        <p class="auth-subcopy">
+          Sign in to manage your profile, submit new pollution reports, update ongoing cases, and engage with community comments.
+        </p>
+        <ul class="auth-points">
+          <li>Track reports you created</li>
+          <li>Join discussions in comments</li>
+          <li>Contribute to city cleanup achievements</li>
+        </ul>
+      </article>
+
+      <article class="auth-card">
+        <h2>Login</h2>
+        <p class="auth-muted">Access your EcoShymkent account.</p>
+        <form id="loginForm">
+          <label>Email Address
+            <input type="email" id="loginEmail" required placeholder="name@email.com" />
+          </label>
+          <label>Password
+            <div class="password-wrap">
+              <input type="password" id="loginPassword" required minlength="6" placeholder="Enter password" />
+              <button type="button" class="toggle-pass" data-target="loginPassword">Show</button>
+            </div>
+          </label>
+          <button class="btn btn-primary auth-submit" type="submit">Sign In</button>
+        </form>
+        <p class="auth-link">No account yet? <a href="register.html">Register</a></p>
+        <p class="auth-home-link"><a href="index.html">Back to Home</a></p>
+        <p id="loginMessage" class="form-message" aria-live="polite"></p>
+      </article>
+    </section>
+  </main>
+  <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | EcoShymkent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-shell">
+      <article class="auth-side">
+        <p class="eyebrow auth-eyebrow">EcoShymkent Community</p>
+        <h1>Create your account</h1>
+        <p class="auth-subcopy">
+          Join to submit pollution reports, upload photos, comment on updates, and track your contribution in the achievements board.
+        </p>
+        <ul class="auth-points">
+          <li>Report issues with location and evidence</li>
+          <li>Follow report status from open to completed</li>
+          <li>Build your public eco contribution profile</li>
+        </ul>
+      </article>
+
+      <article class="auth-card">
+        <h2>Register</h2>
+        <p class="auth-muted">Create your profile in less than a minute.</p>
+        <form id="registerForm">
+          <label>Full Name
+            <input type="text" id="regName" required placeholder="Your name" />
+          </label>
+          <label>Email Address
+            <input type="email" id="regEmail" required placeholder="name@email.com" />
+          </label>
+          <label>Password
+            <div class="password-wrap">
+              <input type="password" id="regPassword" required minlength="6" placeholder="At least 6 characters" />
+              <button type="button" class="toggle-pass" data-target="regPassword">Show</button>
+            </div>
+          </label>
+          <label>Confirm Password
+            <div class="password-wrap">
+              <input type="password" id="regPasswordConfirm" required minlength="6" placeholder="Repeat password" />
+              <button type="button" class="toggle-pass" data-target="regPasswordConfirm">Show</button>
+            </div>
+          </label>
+          <button class="btn btn-primary auth-submit" type="submit">Create Account</button>
+        </form>
+        <p class="auth-link">Already have an account? <a href="login.html">Login</a></p>
+        <p class="auth-home-link"><a href="index.html">Back to Home</a></p>
+        <p id="registerMessage" class="form-message" aria-live="polite"></p>
+      </article>
+    </section>
+  </main>
+  <script src="auth.js"></script>
+</body>
+</html>
