@@ -1,3 +1,7 @@
+const supabaseUrl = 'ТВОЙ_SUPABASE_URL';
+const supabaseKey = 'ТВОЙ_SUPABASE_ANON_KEY';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
 const menuBtn = document.getElementById("menuBtn");
 const siteNav = document.getElementById("siteNav");
 
