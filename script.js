@@ -58,15 +58,49 @@ function renderPlaces() {
   });
 }
 
-function renderReports() {
+async function renderReports() {
   if (!reportList) return;
-  const reports = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+  // Тянем отчеты из Supabase вместо localStorage
+  const { data: reports, error } = await supabase
+    .from('reports')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Ошибка загрузки:", error);
+    return;
+  }
+
   reportList.innerHTML = "";
 
-  if (!reports.length) {
+  if (!reports || reports.length === 0) {
     reportList.innerHTML = "<li>No reports yet. Be the first to add one.</li>";
     return;
   }
+
+  reports.forEach((report) => {
+    const item = document.createElement("li");
+    item.className = "report-item";
+    const statusClass = report.status === "completed"
+      ? "status-completed"
+      : report.status === "in_progress"
+        ? "status-progress"
+        : "status-open";
+        
+    item.innerHTML = `
+      <strong>${report.location}</strong>
+      <p>${report.address}</p>
+      <p>${report.description}</p>
+      ${report.photo ? `<img class="report-media" src="${report.photo}" alt="Report photo">` : ""}
+      <div class="report-meta">
+        <span class="badge">By: ${report.reporter || "Anonymous"}</span>
+        <span class="badge ${statusClass}">Status: ${report.status.replace("_", " ")}</span>
+      </div>
+    `;
+    reportList.appendChild(item);
+  });
+}
 
   reports.forEach((report) => {
     const item = document.createElement("li");
@@ -165,26 +199,33 @@ if (reportForm) {
     const photoInput = document.getElementById("locationPhoto");
     const reporterInput = document.getElementById("reporterName");
 
-    const saveReport = (photoData) => {
-      const reports = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      const currentUser = JSON.parse(localStorage.getItem(currentUserKey) || "null");
-      const fallbackReporter = currentUser?.name || "";
-      reports.unshift({
-        id: Date.now(),
-        location: locationInput.value.trim(),
-        address: addressInput.value.trim(),
-        description: descInput.value.trim(),
-        reporter: reporterInput.value.trim() || fallbackReporter,
-        status: "open",
-        comments: [],
-        photo: photoData || "",
-      });
-      localStorage.setItem(storageKey, JSON.stringify(reports.slice(0, 60)));
-      reportForm.reset();
-      renderReports();
-      renderAchievements();
-    };
+    const saveReport = async (photoData) => {
+      // 1. Получаем пользователя из Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const fallbackReporter = user ? user.user_metadata.full_name : "Anonymous";
 
+      // 2. Отправляем в базу
+      const { data, error } = await supabase
+        .from('reports')
+        .insert([
+          {
+            location: locationInput.value.trim(),
+            address: addressInput.value.trim(),
+            description: descInput.value.trim(),
+            reporter: reporterInput.value.trim() || fallbackReporter,
+            status: "open",
+            photo: photoData || ""
+          }
+        ]);
+
+      if (error) {
+        alert("Ошибка при сохранении: " + error.message);
+      } else {
+        reportForm.reset();
+        renderReports(); 
+        // renderAchievements(); // Временно закомментировали, так как она еще работает на localStorage
+      }
+    };
     const file = photoInput.files && photoInput.files[0];
     if (file) {
       const reader = new FileReader();
