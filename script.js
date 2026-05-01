@@ -2,10 +2,7 @@
   const supabaseUrl = "https://fdxnoirzzmmhqexhrttn.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4";
 
-  const sb =
-    window.supabase && typeof window.supabase.createClient === "function"
-      ? window.supabase.createClient(supabaseUrl, supabaseKey)
-      : null;
+  let sb = null;
 
   const menuBtn = document.getElementById("menuBtn");
   const siteNav = document.getElementById("siteNav");
@@ -25,9 +22,7 @@
   ];
 
   if (menuBtn && siteNav) {
-    menuBtn.addEventListener("click", () => {
-      siteNav.classList.toggle("open");
-    });
+    menuBtn.addEventListener("click", () => siteNav.classList.toggle("open"));
     siteNav.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => siteNav.classList.remove("open"));
     });
@@ -36,11 +31,7 @@
   function initMap() {
     const mapRoot = document.getElementById("cityMap");
     if (!mapRoot) return;
-
-    if (typeof L === "undefined") {
-      setTimeout(initMap, 300);
-      return;
-    }
+    if (typeof L === "undefined") { setTimeout(initMap, 300); return; }
 
     const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -71,23 +62,14 @@
       .from("reports")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) {
-      console.error("Ошибка загрузки отчетов:", error.message);
-      return [];
-    }
+    if (error) { console.error("Ошибка загрузки:", error.message); return []; }
     return data || [];
   }
 
   async function updateReportStatus(reportId, newStatus) {
     if (!sb) return;
-    const { error } = await sb
-      .from("reports")
-      .update({ status: newStatus })
-      .eq("id", reportId);
-    if (error) {
-      console.error("Ошибка обновления статуса:", error.message);
-      alert("Не удалось обновить статус.");
-    }
+    const { error } = await sb.from("reports").update({ status: newStatus }).eq("id", reportId);
+    if (error) { console.error("Ошибка статуса:", error.message); }
   }
 
   async function addComment(reportId, text) {
@@ -99,27 +81,16 @@
     const author = userData?.user?.user_metadata?.full_name || "Anonymous";
 
     const { data: reportRow, error: getErr } = await sb
-      .from("reports")
-      .select("comments")
-      .eq("id", reportId)
-      .single();
+      .from("reports").select("comments").eq("id", reportId).single();
+    if (getErr) { console.error("Ошибка комментария:", getErr.message); return; }
 
-    if (getErr) {
-      console.error("Ошибка чтения комментариев:", getErr.message);
-      return;
-    }
+    const updatedComments = [
+      ...(Array.isArray(reportRow?.comments) ? reportRow.comments : []),
+      { author, text: commentText }
+    ];
 
-    const currentComments = Array.isArray(reportRow?.comments) ? reportRow.comments : [];
-    const updatedComments = [...currentComments, { author, text: commentText }];
-
-    const { error: updErr } = await sb
-      .from("reports")
-      .update({ comments: updatedComments })
-      .eq("id", reportId);
-
-    if (updErr) {
-      console.error("Ошибка сохранения комментария:", updErr.message);
-    }
+    const { error: updErr } = await sb.from("reports").update({ comments: updatedComments }).eq("id", reportId);
+    if (updErr) { console.error("Ошибка сохранения:", updErr.message); }
   }
 
   function renderReportList(reports) {
@@ -134,13 +105,8 @@
     reports.forEach((report) => {
       const item = document.createElement("li");
       item.className = "report-item";
-
       const status = report.status || "open";
-      const statusClass =
-        status === "completed" ? "status-completed" :
-        status === "in_progress" ? "status-progress" :
-        "status-open";
-
+      const statusClass = status === "completed" ? "status-completed" : status === "in_progress" ? "status-progress" : "status-open";
       const comments = Array.isArray(report.comments) ? report.comments : [];
       const commentsHtml = comments.length
         ? comments.map((c) => `<li><strong>${c.author || "Anonymous"}:</strong> ${c.text || ""}</li>`).join("")
@@ -156,8 +122,7 @@
           <span class="badge ${statusClass}">Status: ${String(status).replace("_", " ")}</span>
         </div>
         <div class="report-actions">
-          <label>
-            <span class="badge">Update status</span>
+          <label><span class="badge">Update status</span>
             <select class="status-select" data-id="${report.id}">
               <option value="open" ${status === "open" ? "selected" : ""}>Open</option>
               <option value="in_progress" ${status === "in_progress" ? "selected" : ""}>In progress</option>
@@ -194,39 +159,29 @@
 
   async function renderReports() {
     if (!reportList) return;
-    if (!sb) {
-      reportList.innerHTML = "<li>Supabase client is not initialized.</li>";
-      return;
-    }
-    const reports = await fetchReports();
-    renderReportList(reports);
+    if (!sb) { reportList.innerHTML = "<li>Connecting to database...</li>"; return; }
+    renderReportList(await fetchReports());
   }
 
   async function renderAchievements() {
     if (!topContributors || !achievementSummary) return;
-    if (!sb) {
-      topContributors.innerHTML = "<li>No contributors yet.</li>";
-      achievementSummary.textContent = "No activity yet.";
-      return;
-    }
+    if (!sb) return;
 
     const reports = await fetchReports();
     const stats = {};
     let completedCount = 0;
 
-    reports.forEach((report) => {
-      const name = report.reporter || "Anonymous";
+    reports.forEach((r) => {
+      const name = r.reporter || "Anonymous";
       stats[name] = (stats[name] || 0) + 1;
-      if (report.status === "completed") completedCount += 1;
+      if (r.status === "completed") completedCount++;
     });
 
     const leaders = Object.entries(stats).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
     topContributors.innerHTML = leaders.length
       ? leaders.map(([name, count]) => `<li>${name} - ${count} report(s)</li>`).join("")
       : "<li>No contributors yet.</li>";
-
-    achievementSummary.textContent = `Total reports: ${reports.length}. Completed: ${completedCount}. Open/In progress: ${reports.length - completedCount}.`;
+    achievementSummary.textContent = `Total: ${reports.length}. Completed: ${completedCount}. Open/In progress: ${reports.length - completedCount}.`;
   }
 
   if (reportForm) {
@@ -242,21 +197,18 @@
 
       const saveReport = async (photoData) => {
         const { data: userData } = await sb.auth.getUser();
-        const fallbackReporter = userData?.user?.user_metadata?.full_name || "Anonymous";
-
+        const fallback = userData?.user?.user_metadata?.full_name || "Anonymous";
         const payload = {
           location: (locationInput?.value || "").trim(),
           address: (addressInput?.value || "").trim(),
           description: (descInput?.value || "").trim(),
-          reporter: (reporterInput?.value || "").trim() || fallbackReporter,
+          reporter: (reporterInput?.value || "").trim() || fallback,
           status: "open",
           photo: photoData || "",
           comments: [],
         };
-
         const { error } = await sb.from("reports").insert([payload]);
-        if (error) { alert("Ошибка при сохранении: " + error.message); return; }
-
+        if (error) { alert("Ошибка: " + error.message); return; }
         reportForm.reset();
         await renderReports();
         await renderAchievements();
@@ -273,18 +225,15 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      initMap();
-      renderPlaces();
-      renderReports();
-      renderAchievements();
-    });
-  } else {
+  // Инициализация — ждём полной загрузки страницы включая все скрипты
+  window.addEventListener("load", () => {
+    if (window.supabase) {
+      sb = window.supabase.createClient(supabaseUrl, supabaseKey);
+    }
     initMap();
     renderPlaces();
     renderReports();
     renderAchievements();
-  }
+  });
 
 })();
