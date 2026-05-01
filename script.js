@@ -35,10 +35,27 @@
     });
   }
 
-  function initMap() {
-    const mapRoot = document.getElementById("cityMap");
-    if (!mapRoot || typeof L === "undefined") return;
+    function initMap() {
+      const mapRoot = document.getElementById("cityMap");
+      if (!mapRoot) return;
+  
+      if (typeof L === "undefined") {
+        setTimeout(initMap, 300);
+        return;
+      }
 
+      const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
+      shymkentPlaces.forEach((place) => {
+        L.marker([place.lat, place.lng])
+          .addTo(map)
+          .bindPopup(`<strong>${place.name}</strong><br>${place.address}`);
+      });
+    }
     const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 18,
