@@ -8,25 +8,259 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .profile-shell {
+      width: min(780px, 96%);
+      margin: 0 auto;
+      padding: 2.5rem 0 3rem;
+    }
+    .profile-hero {
+      background: var(--hero-grad);
+      border-radius: 24px;
+      padding: 2rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      box-shadow: 0 18px 45px rgba(22, 57, 98, 0.2);
+      margin-bottom: 1.5rem;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .profile-hero-info h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.7rem;
+      color: #fff;
+    }
+    .profile-hero-info p {
+      margin: 0;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+    }
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(17, 40, 73, 0.06);
+    }
+    .stat-card .stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .stat-card .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+    .profile-reports {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem;
+      box-shadow: 0 8px 24px rgba(17, 40, 73, 0.06);
+      margin-bottom: 1.5rem;
+    }
+    .profile-reports h3 {
+      margin: 0 0 1rem;
+      font-size: 1.1rem;
+    }
+    .profile-report-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.8rem;
+      margin-bottom: 0.6rem;
+      background: #fbfffc;
+    }
+    .profile-report-item:last-child {
+      margin-bottom: 0;
+    }
+    .profile-report-item strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .profile-report-item p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .profile-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .btn-danger {
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+    @media (max-width: 600px) {
+      .profile-stats { grid-template-columns: 1fr 1fr; }
+      .profile-hero { flex-direction: column; text-align: center; }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">EcoShymkent</a>
+      <nav class="site-nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#report">Report Pollution</a>
+        <a href="index.html#achievements">Achievements</a>
+        <a href="#" id="logoutBtn">Logout</a>
+      </nav>
     </div>
   </header>
-  <main class="auth-page">
-    <section class="auth-card">
-      <h1>Your Profile</h1>
-      <div id="profileContent">Loading...</div>
-      <div class="hero-actions" style="margin-top:1.5rem">
-        <a class="btn btn-ghost" href="index.html">Go to Main Site</a>
-        <button class="btn btn-primary" id="logoutBtn" type="button">Logout</button>
+
+  <main>
+    <div class="profile-shell">
+
+      <!-- Профиль герой -->
+      <div class="profile-hero">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-hero-info">
+          <h1 id="profileName">Loading...</h1>
+          <p id="profileEmail"></p>
+          <p id="profileJoined" style="margin-top:0.3rem; font-size:0.82rem; opacity:0.75"></p>
+        </div>
       </div>
-      <p id="profileMessage"></p>
-    </section>
+
+      <!-- Статистика -->
+      <div class="profile-stats">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">—</div>
+          <div class="stat-label">Total Reports</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statCompleted">—</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statOpen">—</div>
+          <div class="stat-label">Open / In Progress</div>
+        </div>
+      </div>
+
+      <!-- Мои репорты -->
+      <div class="profile-reports">
+        <h3>My Reports</h3>
+        <div id="myReportsList"><p style="color:var(--muted)">Loading reports...</p></div>
+      </div>
+
+      <!-- Кнопки -->
+      <div class="profile-actions">
+        <a class="btn btn-primary" href="index.html">Go to Main Site</a>
+        <a class="btn btn-ghost dark-ghost" href="index.html#report">Submit New Report</a>
+        <button class="btn btn-danger" id="logoutBtn2" type="button">Logout</button>
+      </div>
+
+    </div>
   </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <p>EcoShymkent | Citizen Ecology Awareness Platform</p>
+      <a href="index.html">Back to Home</a>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
+  <script>
+    window.addEventListener("load", async () => {
+      if (!window.supabase) return;
+      const sb = window.supabase.createClient(
+        "https://fdxnoirzzmmhqexhrttn.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4"
+      );
+
+      const { data: { user }, error } = await sb.auth.getUser();
+      if (error || !user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Заполняем профиль
+      const name = user.user_metadata?.full_name || "User";
+      const email = user.email || "";
+      const joined = new Date(user.created_at).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" });
+
+      document.getElementById("profileAvatar").textContent = name.charAt(0).toUpperCase();
+      document.getElementById("profileName").textContent = name;
+      document.getElementById("profileEmail").textContent = email;
+      document.getElementById("profileJoined").textContent = "Member since " + joined;
+
+      // Загружаем репорты пользователя
+      const { data: reports } = await sb
+        .from("reports")
+        .select("*")
+        .eq("reporter", name)
+        .order("created_at", { ascending: false });
+
+      const list = reports || [];
+      const completed = list.filter(r => r.status === "completed").length;
+      const open = list.length - completed;
+
+      document.getElementById("statTotal").textContent = list.length;
+      document.getElementById("statCompleted").textContent = completed;
+      document.getElementById("statOpen").textContent = open;
+
+      const container = document.getElementById("myReportsList");
+      if (!list.length) {
+        container.innerHTML = `<p style="color:var(--muted)">No reports yet. <a href="index.html#report">Submit your first one!</a></p>`;
+      } else {
+        container.innerHTML = list.map(r => {
+          const status = r.status || "open";
+          const statusClass = status === "completed" ? "status-completed" : status === "in_progress" ? "status-progress" : "status-open";
+          const date = new Date(r.created_at).toLocaleDateString("en-GB");
+          return `
+            <div class="profile-report-item">
+              <strong>${r.location || "Unknown location"}</strong>
+              <p>${r.address || ""} ${r.description ? "— " + r.description : ""}</p>
+              <div style="margin-top:0.4rem; display:flex; gap:0.4rem; flex-wrap:wrap">
+                <span class="badge ${statusClass}">Status: ${status.replace("_", " ")}</span>
+                <span class="badge">${date}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Logout
+      const logout = async (e) => {
+        e.preventDefault();
+        await sb.auth.signOut();
+        window.location.href = "login.html";
+      };
+      document.getElementById("logoutBtn").addEventListener("click", logout);
+      document.getElementById("logoutBtn2").addEventListener("click", logout);
+    });
+  </script>
 </body>
 </html>
