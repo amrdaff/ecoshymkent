@@ -1,5 +1,5 @@
 (() => {
-  const supabaseUrl = "https://fdxnoirzzmmhqexhrttn.supabase.co";
+  const supabaseUrl = "sb_publishable_ibANqJpuvkek6N7OYqVMZQ_Vp6q1aOr";
   const supabaseKey =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4";
 
