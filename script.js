@@ -3,6 +3,7 @@
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4";
 
   let sb = null;
+  let currentUser = null;
 
   const menuBtn = document.getElementById("menuBtn");
   const siteNav = document.getElementById("siteNav");
@@ -32,16 +33,12 @@
     const mapRoot = document.getElementById("cityMap");
     if (!mapRoot) return;
     if (typeof L === "undefined") { setTimeout(initMap, 300); return; }
-
     const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
-      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 18, attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
-
     shymkentPlaces.forEach((place) => {
-      L.marker([place.lat, place.lng])
-        .addTo(map)
+      L.marker([place.lat, place.lng]).addTo(map)
         .bindPopup(`<strong>${place.name}</strong><br>${place.address}`);
     });
   }
@@ -56,47 +53,157 @@
     });
   }
 
+  function formatTime(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+    if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+    if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+
   async function fetchReports() {
     if (!sb) return [];
-    const { data, error } = await sb
-      .from("reports")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) { console.error("Ошибка загрузки:", error.message); return []; }
+    const { data, error } = await sb.from("reports").select("*").order("created_at", { ascending: false });
+    if (error) { console.error("Fetch error:", error.message); return []; }
     return data || [];
   }
 
   async function updateReportStatus(reportId, newStatus) {
     if (!sb) return;
     const { error } = await sb.from("reports").update({ status: newStatus }).eq("id", reportId);
-    if (error) { console.error("Ошибка статуса:", error.message); }
+    if (error) console.error("Status error:", error.message);
   }
 
-  async function addComment(reportId, text) {
+  async function saveComments(reportId, comments) {
     if (!sb) return;
-    const commentText = (text || "").trim();
-    if (!commentText) return;
+    const { error } = await sb.from("reports").update({ comments }).eq("id", reportId);
+    if (error) console.error("Save comments error:", error.message);
+  }
 
-    const { data: userData } = await sb.auth.getUser();
-    const author = userData?.user?.user_metadata?.full_name || "Anonymous";
+  async function getComments(reportId) {
+    if (!sb) return [];
+    const { data, error } = await sb.from("reports").select("comments").eq("id", reportId).single();
+    if (error) return [];
+    return Array.isArray(data?.comments) ? data.comments : [];
+  }
 
-    const { data: reportRow, error: getErr } = await sb
-      .from("reports").select("comments").eq("id", reportId).single();
-    if (getErr) { console.error("Ошибка комментария:", getErr.message); return; }
+  // Рендер одного комментария
+  function renderComment(c, reportId, allComments, depth = 0) {
+    const isOwner = currentUser && (currentUser.user_metadata?.full_name === c.author || currentUser.email === c.author);
+    const likes = c.likes || 0;
+    const likedBy = c.likedBy || [];
+    const hasLiked = currentUser && likedBy.includes(currentUser.email);
+    const replies = allComments.filter(r => r.parentId === c.id);
 
-    const updatedComments = [
-      ...(Array.isArray(reportRow?.comments) ? reportRow.comments : []),
-      { author, text: commentText }
-    ];
+    const div = document.createElement("div");
+    div.className = "comment-item" + (depth > 0 ? " comment-reply" : "");
+    div.dataset.commentId = c.id;
 
-    const { error: updErr } = await sb.from("reports").update({ comments: updatedComments }).eq("id", reportId);
-    if (updErr) { console.error("Ошибка сохранения:", updErr.message); }
+    div.innerHTML = `
+      <div class="comment-avatar">${(c.author || "A").charAt(0).toUpperCase()}</div>
+      <div class="comment-body">
+        <div class="comment-header">
+          <span class="comment-author">${c.author || "Anonymous"}</span>
+          <span class="comment-time">${formatTime(c.createdAt)}</span>
+          ${isOwner ? `<button class="comment-delete" data-id="${c.id}" title="Delete">✕</button>` : ""}
+        </div>
+        <div class="comment-text">${c.text || ""}</div>
+        <div class="comment-actions">
+          <button class="comment-like ${hasLiked ? "liked" : ""}" data-id="${c.id}">
+            <span class="like-icon">${hasLiked ? "❤️" : "🤍"}</span>
+            <span class="like-count">${likes}</span>
+          </button>
+          <button class="comment-reply-btn" data-id="${c.id}" data-author="${c.author}">↩ Reply</button>
+        </div>
+        <div class="reply-input-wrap" id="reply-wrap-${c.id}" style="display:none">
+          <input type="text" class="reply-input" placeholder="Reply to ${c.author}..." />
+          <button class="reply-send btn-send-comment">Send</button>
+        </div>
+        <div class="replies-container" id="replies-${c.id}"></div>
+      </div>
+    `;
+
+    // Рендерим ответы
+    const repliesContainer = div.querySelector(`#replies-${c.id}`);
+    replies.forEach(reply => {
+      repliesContainer.appendChild(renderComment(reply, reportId, allComments, depth + 1));
+    });
+
+    // Лайк
+    div.querySelector(".comment-like").addEventListener("click", async () => {
+      if (!currentUser) { alert("Please login to like comments."); return; }
+      const comments = await getComments(reportId);
+      const idx = comments.findIndex(x => x.id === c.id);
+      if (idx === -1) return;
+      const email = currentUser.email;
+      const lb = comments[idx].likedBy || [];
+      if (lb.includes(email)) {
+        comments[idx].likedBy = lb.filter(e => e !== email);
+        comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
+      } else {
+        comments[idx].likedBy = [...lb, email];
+        comments[idx].likes = (comments[idx].likes || 0) + 1;
+      }
+      await saveComments(reportId, comments);
+      await renderReports();
+    });
+
+    // Reply toggle
+    div.querySelector(".comment-reply-btn").addEventListener("click", () => {
+      const wrap = div.querySelector(`#reply-wrap-${c.id}`);
+      wrap.style.display = wrap.style.display === "none" ? "flex" : "none";
+      if (wrap.style.display === "flex") wrap.querySelector("input").focus();
+    });
+
+    // Send reply
+    div.querySelector(".reply-send").addEventListener("click", async () => {
+      if (!currentUser) { alert("Please login to reply."); return; }
+      const input = div.querySelector(".reply-input");
+      const text = input.value.trim();
+      if (!text) return;
+      const comments = await getComments(reportId);
+      comments.push({
+        id: Date.now().toString(),
+        parentId: c.id,
+        author: currentUser.user_metadata?.full_name || "Anonymous",
+        text,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        likedBy: [],
+      });
+      await saveComments(reportId, comments);
+      await renderReports();
+    });
+
+    // Delete
+    const delBtn = div.querySelector(".comment-delete");
+    if (delBtn) {
+      delBtn.addEventListener("click", async () => {
+        if (!confirm("Delete this comment?")) return;
+        const comments = await getComments(reportId);
+        // Удаляем комментарий и все его ответы
+        const toDelete = new Set();
+        const collect = (id) => {
+          toDelete.add(id);
+          comments.filter(x => x.parentId === id).forEach(x => collect(x.id));
+        };
+        collect(c.id);
+        const updated = comments.filter(x => !toDelete.has(x.id));
+        await saveComments(reportId, updated);
+        await renderReports();
+      });
+    }
+
+    return div;
   }
 
   function renderReportList(reports) {
     if (!reportList) return;
     reportList.innerHTML = "";
-
     if (!reports.length) {
       reportList.innerHTML = "<li>No reports yet. Be the first to add one.</li>";
       return;
@@ -107,10 +214,8 @@
       item.className = "report-item";
       const status = report.status || "open";
       const statusClass = status === "completed" ? "status-completed" : status === "in_progress" ? "status-progress" : "status-open";
-      const comments = Array.isArray(report.comments) ? report.comments : [];
-      const commentsHtml = comments.length
-        ? comments.map((c) => `<li><strong>${c.author || "Anonymous"}:</strong> ${c.text || ""}</li>`).join("")
-        : "<li>No comments yet.</li>";
+      const allComments = Array.isArray(report.comments) ? report.comments : [];
+      const topComments = allComments.filter(c => !c.parentId);
 
       item.innerHTML = `
         <strong>${report.location || "Unknown location"}</strong>
@@ -130,30 +235,59 @@
             </select>
           </label>
         </div>
-        <ul class="comment-list">${commentsHtml}</ul>
-        <form class="comment-form" data-id="${report.id}">
-          <input type="text" placeholder="Add comment..." required />
-          <button class="btn btn-ghost small" type="submit">Send</button>
-        </form>
+        <div class="comments-section">
+          <div class="comments-header">
+            <span>💬 ${allComments.length} comment${allComments.length !== 1 ? "s" : ""}</span>
+          </div>
+          <div class="comments-list" id="comments-${report.id}"></div>
+          <div class="new-comment-wrap">
+            <div class="comment-avatar">${currentUser ? (currentUser.user_metadata?.full_name || "U").charAt(0).toUpperCase() : "?"}</div>
+            <input type="text" class="new-comment-input" placeholder="${currentUser ? "Add a comment..." : "Login to comment..."}" ${!currentUser ? "disabled" : ""} />
+            <button class="btn-send-comment new-comment-send" data-id="${report.id}">Send</button>
+          </div>
+        </div>
       `;
-      reportList.appendChild(item);
-    });
 
-    reportList.querySelectorAll(".status-select").forEach((select) => {
-      select.addEventListener("change", async () => {
-        await updateReportStatus(Number(select.dataset.id), select.value);
+      // Рендерим комментарии
+      const commentsContainer = item.querySelector(`#comments-${report.id}`);
+      topComments.forEach(c => {
+        commentsContainer.appendChild(renderComment(c, report.id, allComments));
+      });
+
+      // Status change
+      item.querySelector(".status-select").addEventListener("change", async (e) => {
+        await updateReportStatus(Number(report.id), e.target.value);
         await renderReports();
         await renderAchievements();
       });
-    });
 
-    reportList.querySelectorAll(".comment-form").forEach((form) => {
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const input = form.querySelector("input");
-        await addComment(Number(form.dataset.id), input?.value || "");
+      // New comment
+      item.querySelector(".new-comment-send").addEventListener("click", async () => {
+        if (!currentUser) { alert("Please login to comment."); return; }
+        const input = item.querySelector(".new-comment-input");
+        const text = input.value.trim();
+        if (!text) return;
+        const comments = await getComments(report.id);
+        comments.push({
+          id: Date.now().toString(),
+          parentId: null,
+          author: currentUser.user_metadata?.full_name || "Anonymous",
+          text,
+          createdAt: new Date().toISOString(),
+          likes: 0,
+          likedBy: [],
+        });
+        await saveComments(report.id, comments);
+        input.value = "";
         await renderReports();
       });
+
+      // Enter key для нового комментария
+      item.querySelector(".new-comment-input").addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") item.querySelector(".new-comment-send").click();
+      });
+
+      reportList.appendChild(item);
     });
   }
 
@@ -166,17 +300,14 @@
   async function renderAchievements() {
     if (!topContributors || !achievementSummary) return;
     if (!sb) return;
-
     const reports = await fetchReports();
     const stats = {};
     let completedCount = 0;
-
     reports.forEach((r) => {
       const name = r.reporter || "Anonymous";
       stats[name] = (stats[name] || 0) + 1;
       if (r.status === "completed") completedCount++;
     });
-
     const leaders = Object.entries(stats).sort((a, b) => b[1] - a[1]).slice(0, 5);
     topContributors.innerHTML = leaders.length
       ? leaders.map(([name, count]) => `<li>${name} - ${count} report(s)</li>`).join("")
@@ -188,7 +319,6 @@
     reportForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!sb) { alert("Supabase is not initialized."); return; }
-
       const locationInput = document.getElementById("locationName");
       const addressInput = document.getElementById("locationAddress");
       const descInput = document.getElementById("locationDesc");
@@ -196,19 +326,16 @@
       const reporterInput = document.getElementById("reporterName");
 
       const saveReport = async (photoData) => {
-        const { data: userData } = await sb.auth.getUser();
-        const fallback = userData?.user?.user_metadata?.full_name || "Anonymous";
+        const fallback = currentUser?.user_metadata?.full_name || "Anonymous";
         const payload = {
           location: (locationInput?.value || "").trim(),
           address: (addressInput?.value || "").trim(),
           description: (descInput?.value || "").trim(),
           reporter: (reporterInput?.value || "").trim() || fallback,
-          status: "open",
-          photo: photoData || "",
-          comments: [],
+          status: "open", photo: photoData || "", comments: [],
         };
         const { error } = await sb.from("reports").insert([payload]);
-        if (error) { alert("Ошибка: " + error.message); return; }
+        if (error) { alert("Error: " + error.message); return; }
         reportForm.reset();
         await renderReports();
         await renderAchievements();
@@ -225,10 +352,11 @@
     });
   }
 
-  // Инициализация — ждём полной загрузки страницы включая все скрипты
-  window.addEventListener("load", () => {
+  window.addEventListener("load", async () => {
     if (window.supabase) {
       sb = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const { data: { user } } = await sb.auth.getUser();
+      currentUser = user || null;
     }
     initMap();
     renderPlaces();
