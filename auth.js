@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(error.message);
       } else {
         setMessage(msg, "Login successful! Redirecting...", true);
-        setTimeout(() => { window.location.href = "profile.html"; }, 1000);
+        setTimeout(() => { window.location.href = "index.html"; }, 1000);
       }
     });
   }
