@@ -1,7 +1,6 @@
 (() => {
-  const supabaseUrl = "sb_publishable_ibANqJpuvkek6N7OYqVMZQ_Vp6q1aOr";
-  const supabaseKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4";
+  const supabaseUrl = "https://fdxnoirzzmmhqexhrttn.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeG5vaXJ6em1taHFleGhydHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4ODAyMTcsImV4cCI6MjA5MjQ1NjIxN30.4J6xKeQrj-OK34FaCdEHAsbgnONxv-JV8XUrgyhr4v4";
 
   const sb =
     window.supabase && typeof window.supabase.createClient === "function"
@@ -29,33 +28,20 @@
     menuBtn.addEventListener("click", () => {
       siteNav.classList.toggle("open");
     });
-
     siteNav.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => siteNav.classList.remove("open"));
     });
   }
 
-    function initMap() {
-      const mapRoot = document.getElementById("cityMap");
-      if (!mapRoot) return;
-  
-      if (typeof L === "undefined") {
-        setTimeout(initMap, 300);
-        return;
-      }
+  function initMap() {
+    const mapRoot = document.getElementById("cityMap");
+    if (!mapRoot) return;
 
-      const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map);
-
-      shymkentPlaces.forEach((place) => {
-        L.marker([place.lat, place.lng])
-          .addTo(map)
-          .bindPopup(`<strong>${place.name}</strong><br>${place.address}`);
-      });
+    if (typeof L === "undefined") {
+      setTimeout(initMap, 300);
+      return;
     }
+
     const map = L.map(mapRoot).setView([42.3417, 69.5901], 11);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 18,
@@ -81,12 +67,10 @@
 
   async function fetchReports() {
     if (!sb) return [];
-
     const { data, error } = await sb
       .from("reports")
       .select("*")
       .order("created_at", { ascending: false });
-
     if (error) {
       console.error("Ошибка загрузки отчетов:", error.message);
       return [];
@@ -100,7 +84,6 @@
       .from("reports")
       .update({ status: newStatus })
       .eq("id", reportId);
-
     if (error) {
       console.error("Ошибка обновления статуса:", error.message);
       alert("Не удалось обновить статус.");
@@ -123,7 +106,6 @@
 
     if (getErr) {
       console.error("Ошибка чтения комментариев:", getErr.message);
-      alert("Не удалось добавить комментарий.");
       return;
     }
 
@@ -137,7 +119,6 @@
 
     if (updErr) {
       console.error("Ошибка сохранения комментария:", updErr.message);
-      alert("Не удалось сохранить комментарий.");
     }
   }
 
@@ -162,9 +143,7 @@
 
       const comments = Array.isArray(report.comments) ? report.comments : [];
       const commentsHtml = comments.length
-        ? comments
-            .map((comment) => `<li><strong>${comment.author || "Anonymous"}:</strong> ${comment.text || ""}</li>`)
-            .join("")
+        ? comments.map((c) => `<li><strong>${c.author || "Anonymous"}:</strong> ${c.text || ""}</li>`).join("")
         : "<li>No comments yet.</li>";
 
       item.innerHTML = `
@@ -192,14 +171,12 @@
           <button class="btn btn-ghost small" type="submit">Send</button>
         </form>
       `;
-
       reportList.appendChild(item);
     });
 
     reportList.querySelectorAll(".status-select").forEach((select) => {
       select.addEventListener("change", async () => {
-        const reportId = Number(select.dataset.id);
-        await updateReportStatus(reportId, select.value);
+        await updateReportStatus(Number(select.dataset.id), select.value);
         await renderReports();
         await renderAchievements();
       });
@@ -208,10 +185,8 @@
     reportList.querySelectorAll(".comment-form").forEach((form) => {
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const reportId = Number(form.dataset.id);
         const input = form.querySelector("input");
-        const text = input ? input.value : "";
-        await addComment(reportId, text);
+        await addComment(Number(form.dataset.id), input?.value || "");
         await renderReports();
       });
     });
@@ -245,9 +220,7 @@
       if (report.status === "completed") completedCount += 1;
     });
 
-    const leaders = Object.entries(stats)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    const leaders = Object.entries(stats).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
     topContributors.innerHTML = leaders.length
       ? leaders.map(([name, count]) => `<li>${name} - ${count} report(s)</li>`).join("")
@@ -259,10 +232,7 @@
   if (reportForm) {
     reportForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!sb) {
-        alert("Supabase is not initialized.");
-        return;
-      }
+      if (!sb) { alert("Supabase is not initialized."); return; }
 
       const locationInput = document.getElementById("locationName");
       const addressInput = document.getElementById("locationAddress");
@@ -272,8 +242,7 @@
 
       const saveReport = async (photoData) => {
         const { data: userData } = await sb.auth.getUser();
-        const fallbackReporter =
-          userData?.user?.user_metadata?.full_name || "Anonymous";
+        const fallbackReporter = userData?.user?.user_metadata?.full_name || "Anonymous";
 
         const payload = {
           location: (locationInput?.value || "").trim(),
@@ -286,18 +255,14 @@
         };
 
         const { error } = await sb.from("reports").insert([payload]);
-
-        if (error) {
-          alert("Ошибка при сохранении: " + error.message);
-          return;
-        }
+        if (error) { alert("Ошибка при сохранении: " + error.message); return; }
 
         reportForm.reset();
         await renderReports();
         await renderAchievements();
       };
 
-      const file = photoInput && photoInput.files ? photoInput.files[0] : null;
+      const file = photoInput?.files?.[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = () => saveReport(reader.result);
@@ -308,17 +273,18 @@
     });
   }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      renderPlaces();
+      renderReports();
+      renderAchievements();
+    });
+  } else {
     initMap();
     renderPlaces();
     renderReports();
     renderAchievements();
-  });
-} else {
-  initMap();
-  renderPlaces();
-  renderReports();
-  renderAchievements();
-}
+  }
+
 })();
