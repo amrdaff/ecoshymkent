@@ -291,8 +291,17 @@
     });
   }
 
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    initMap();
+    renderPlaces();
+    renderReports();
+    renderAchievements();
+  });
+} else {
   initMap();
   renderPlaces();
   renderReports();
   renderAchievements();
+}
 })();
