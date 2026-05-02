@@ -262,19 +262,23 @@
         </div>
 
         <!-- Изменить пароль -->
+        <!-- Изменить пароль -->
         <div class="settings-card">
           <h3>🔒 Change Password</h3>
           <div class="settings-form">
+            <label>Current Password
+              <input type="password" id="currentPassword" placeholder="Enter current password" />
+            </label>
             <label>New Password
               <input type="password" id="newPassword" placeholder="At least 6 characters" />
             </label>
-            <label>Confirm Password
+            <label>Confirm New Password
               <input type="password" id="confirmPassword" placeholder="Repeat new password" />
             </label>
             <button class="btn btn-primary" id="savePasswordBtn" style="width:fit-content">Update Password</button>
             <p class="settings-msg" id="passwordMsg"></p>
           </div>
-        </div>
+         </div>
 
         <!-- Опасная зона -->
         <div class="danger-zone">
@@ -378,31 +382,62 @@
       });
 
       // Сменить пароль
-      document.getElementById("savePasswordBtn").addEventListener("click", async () => {
-        const newPass = document.getElementById("newPassword").value;
-        const confirmPass = document.getElementById("confirmPassword").value;
-        const msg = document.getElementById("passwordMsg");
-        if (newPass.length < 6) {
-          msg.className = "settings-msg err";
-          msg.textContent = "Password must be at least 6 characters.";
-          return;
-        }
-        if (newPass !== confirmPass) {
-          msg.className = "settings-msg err";
-          msg.textContent = "Passwords do not match.";
-          return;
-        }
-        const { error } = await sb.auth.updateUser({ password: newPass });
-        if (error) {
-          msg.className = "settings-msg err";
-          msg.textContent = "Error: " + error.message;
-        } else {
-          msg.className = "settings-msg ok";
-          msg.textContent = "Password updated successfully!";
-          document.getElementById("newPassword").value = "";
-          document.getElementById("confirmPassword").value = "";
-        }
-      });
+      // Сменить пароль
+document.getElementById("savePasswordBtn").addEventListener("click", async () => {
+  const currentPass = document.getElementById("currentPassword").value;
+  const newPass = document.getElementById("newPassword").value;
+  const confirmPass = document.getElementById("confirmPassword").value;
+  const msg = document.getElementById("passwordMsg");
+
+  if (!currentPass) {
+    msg.className = "settings-msg err";
+    msg.textContent = "Please enter your current password.";
+    return;
+  }
+  if (newPass.length < 6) {
+    msg.className = "settings-msg err";
+    msg.textContent = "New password must be at least 6 characters.";
+    return;
+  }
+  if (newPass !== confirmPass) {
+    msg.className = "settings-msg err";
+    msg.textContent = "Passwords do not match.";
+    return;
+  }
+  if (currentPass === newPass) {
+    msg.className = "settings-msg err";
+    msg.textContent = "New password must be different from current.";
+    return;
+  }
+
+  msg.className = "settings-msg";
+  msg.textContent = "Verifying...";
+
+  // Верифицируем текущий пароль через повторный логин
+  const { error: signInError } = await sb.auth.signInWithPassword({
+    email: user.email,
+    password: currentPass,
+  });
+
+  if (signInError) {
+    msg.className = "settings-msg err";
+    msg.textContent = "Current password is incorrect.";
+    return;
+  }
+
+  // Обновляем пароль
+  const { error } = await sb.auth.updateUser({ password: newPass });
+  if (error) {
+    msg.className = "settings-msg err";
+    msg.textContent = "Error: " + error.message;
+  } else {
+    msg.className = "settings-msg ok";
+    msg.textContent = "Password updated successfully!";
+    document.getElementById("currentPassword").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+  }
+});
 
       // Logout
       const logout = async (e) => {
