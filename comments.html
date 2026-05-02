@@ -30,6 +30,8 @@
       cursor: pointer;
     }
     .back-btn:hover { background: #f0f4fb; }
+
+    /* Главный коммент */
     .original-comment {
       background: var(--hero-grad);
       border-radius: 16px;
@@ -38,20 +40,35 @@
       margin-bottom: 1.5rem;
       box-shadow: 0 8px 24px rgba(22,57,98,0.15);
     }
-    .original-comment .oc-author {
-      font-weight: 700;
-      font-size: 1rem;
-      margin-bottom: 0.3rem;
+    .oc-top { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+    .oc-avatar {
+      width: 38px; height: 38px; min-width: 38px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; color: #fff;
     }
-    .original-comment .oc-text {
-      font-size: 1.05rem;
-      line-height: 1.5;
+    .oc-author { font-weight: 700; font-size: 1rem; }
+    .oc-time { font-size: 0.78rem; opacity: 0.75; }
+    .oc-text { font-size: 1.05rem; line-height: 1.5; margin-bottom: 0.6rem; }
+    .oc-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .oc-like {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex; align-items: center; gap: 0.3rem;
+      transition: background 0.15s;
     }
-    .original-comment .oc-meta {
-      margin-top: 0.6rem;
-      font-size: 0.8rem;
-      opacity: 0.75;
-    }
+    .oc-like:hover { background: rgba(255,255,255,0.25); }
+    .oc-like.liked { background: rgba(255,255,255,0.3); font-weight: 700; }
+    .oc-meta { font-size: 0.8rem; opacity: 0.7; }
+
+    /* Ответы */
     .replies-title {
       font-size: 0.85rem;
       font-weight: 700;
@@ -62,7 +79,7 @@
     }
     .replies-list {
       display: grid;
-      gap: 0.6rem;
+      gap: 0.5rem;
       margin-bottom: 1.25rem;
     }
     .reply-item {
@@ -73,75 +90,76 @@
       border-radius: 14px;
       padding: 0.85rem 1rem;
     }
-    .reply-item .comment-avatar {
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
+    .reply-avatar {
+      width: 34px; height: 34px; min-width: 34px;
       border-radius: 50%;
       background: var(--hero-grad);
       color: #fff;
-      font-weight: 700;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
     }
-    .reply-item .reply-body { flex: 1; }
-    .reply-item .reply-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.25rem;
+    .reply-body { flex: 1; min-width: 0; }
+    .reply-header {
+      display: flex; align-items: center;
+      gap: 0.5rem; margin-bottom: 0.2rem; flex-wrap: wrap;
     }
-    .reply-item .reply-author { font-weight: 700; font-size: 0.88rem; }
-    .reply-item .reply-time { font-size: 0.78rem; color: var(--muted); }
-    .reply-item .reply-text { font-size: 0.92rem; line-height: 1.45; }
-    .reply-item .reply-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 0.4rem;
+    .reply-author { font-weight: 700; font-size: 0.88rem; }
+    .reply-time { font-size: 0.76rem; color: var(--muted); }
+    .reply-to { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+    .reply-text { font-size: 0.92rem; line-height: 1.45; word-break: break-word; }
+    .reply-actions {
+      display: flex; align-items: center;
+      gap: 0.6rem; margin-top: 0.4rem;
     }
     .reply-delete {
       margin-left: auto;
-      background: none;
-      border: none;
-      color: #cc3333;
-      cursor: pointer;
-      font-size: 0.75rem;
-      padding: 0.1rem 0.3rem;
-      border-radius: 4px;
-      opacity: 0.6;
+      background: none; border: none;
+      color: #cc3333; cursor: pointer;
+      font-size: 0.75rem; padding: 0.1rem 0.3rem;
+      border-radius: 4px; opacity: 0.6;
     }
     .reply-delete:hover { opacity: 1; background: #fff0f0; }
+    .reply-btn {
+      background: none; border: none;
+      color: var(--accent); font-weight: 600;
+      font-size: 0.82rem; cursor: pointer;
+      padding: 0.2rem 0.4rem; border-radius: 999px;
+    }
+    .reply-btn:hover { background: var(--accent-soft); }
+
+    /* Форма ответа */
     .new-reply-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 1.1rem;
       box-shadow: 0 4px 16px rgba(17,40,73,0.06);
+      position: sticky;
+      bottom: 1rem;
     }
-    .new-reply-box h4 { margin: 0 0 0.75rem; font-size: 0.95rem; color: var(--text); }
+    .new-reply-box h4 { margin: 0 0 0.6rem; font-size: 0.95rem; color: var(--text); }
+    .replying-to-label {
+      font-size: 0.82rem; color: var(--accent);
+      font-weight: 600; margin-bottom: 0.5rem;
+      display: none;
+    }
     .new-reply-wrap {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
+      display: flex; gap: 0.5rem; align-items: center;
     }
     .new-reply-input {
       flex: 1;
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 0.55rem 1rem;
-      font: inherit;
-      font-size: 0.9rem;
+      font: inherit; font-size: 0.9rem;
       background: #f8fbff;
       margin-top: 0 !important;
     }
     .new-reply-input:focus { outline: 2px solid var(--ring); }
+    .new-reply-input:disabled { background: #f0f4fa; cursor: not-allowed; }
     .empty-replies {
-      text-align: center;
-      padding: 2rem;
-      color: var(--muted);
-      font-size: 0.92rem;
+      text-align: center; padding: 2rem;
+      color: var(--muted); font-size: 0.92rem;
     }
   </style>
 </head>
@@ -158,10 +176,8 @@
 
   <main>
     <div class="replies-shell">
-      <a class="back-btn" id="backBtn">← Back to reports</a>
-
+      <a class="back-btn" href="index.html#report">← Back to reports</a>
       <div id="originalComment"></div>
-
       <div class="replies-title" id="repliesTitle">Replies</div>
       <div class="replies-list" id="repliesList">
         <div class="empty-replies">Loading...</div>
@@ -169,12 +185,12 @@
 
       <div class="new-reply-box">
         <h4>💬 Write a reply</h4>
+        <div class="replying-to-label" id="replyingToLabel"></div>
         <div class="new-reply-wrap">
-          <div class="comment-avatar" id="replyAvatar">?</div>
+          <div class="reply-avatar" id="replyAvatar">?</div>
           <input type="text" class="new-reply-input" id="replyInput" placeholder="Login to reply..." disabled />
           <button class="btn-send-comment" id="replySendBtn">Send</button>
         </div>
-        <p id="replyMsg" style="font-size:0.85rem;margin-top:0.5rem;min-height:1rem;color:var(--muted)"></p>
       </div>
     </div>
   </main>
@@ -195,7 +211,9 @@
     const reportId = params.get("report");
     const commentId = params.get("comment");
 
-    document.getElementById("backBtn").href = "index.html#report";
+    // Кому отвечаем — по умолчанию на главный коммент
+    let replyingToId = commentId;
+    let replyingToAuthor = null;
 
     function formatTime(ts) {
       if (!ts) return "";
@@ -217,41 +235,88 @@
       const currentUser = user || null;
       const userName = currentUser?.user_metadata?.full_name || "Anonymous";
 
-      // Аватар
-      const avatarEl = document.getElementById("replyAvatar");
       if (currentUser) {
-        avatarEl.textContent = userName.charAt(0).toUpperCase();
+        document.getElementById("replyAvatar").textContent = userName.charAt(0).toUpperCase();
         const input = document.getElementById("replyInput");
         input.disabled = false;
         input.placeholder = "Write a reply...";
       }
 
-      async function loadPage() {
-        const { data, error } = await sb.from("reports").select("comments").eq("id", reportId).single();
-        if (error || !data) return;
+      async function getAll() {
+        const { data } = await sb.from("reports").select("comments").eq("id", reportId).single();
+        return Array.isArray(data?.comments) ? data.comments : [];
+      }
 
-        const allComments = Array.isArray(data.comments) ? data.comments : [];
+      async function loadPage() {
+        const allComments = await getAll();
         const parent = allComments.find(c => c.id === commentId);
         if (!parent) {
           document.getElementById("originalComment").innerHTML = `<p style="color:var(--muted)">Comment not found.</p>`;
           return;
         }
 
-        const replies = allComments.filter(c => c.parentId === commentId);
+        // Все ответы — и прямые и вложенные (все у кого parentId совпадает с commentId или с другим ответом)
+        // Собираем все id которые относятся к этому треду
+        const threadIds = new Set([commentId]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          allComments.forEach(c => {
+            if (c.parentId && threadIds.has(c.parentId) && !threadIds.has(c.id)) {
+              threadIds.add(c.id);
+              changed = true;
+            }
+          });
+        }
+        const replies = allComments.filter(c => c.id !== commentId && threadIds.has(c.id))
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-        // Оригинальный комментарий
+        // Лайк главного комментария
+        const parentLikes = parent.likes || 0;
+        const parentLikedBy = parent.likedBy || [];
+        const parentHasLiked = currentUser && parentLikedBy.includes(currentUser.email);
+
         document.getElementById("originalComment").innerHTML = `
           <div class="original-comment">
-            <div class="oc-author">${parent.author || "Anonymous"}</div>
+            <div class="oc-top">
+              <div class="oc-avatar">${(parent.author || "A").charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="oc-author">${parent.author || "Anonymous"}</div>
+                <div class="oc-time">${formatTime(parent.createdAt)}</div>
+              </div>
+            </div>
             <div class="oc-text">${parent.text || ""}</div>
-            <div class="oc-meta">${formatTime(parent.createdAt)} · ${replies.length} repl${replies.length !== 1 ? "ies" : "y"}</div>
+            <div class="oc-actions">
+              <button class="oc-like ${parentHasLiked ? "liked" : ""}" id="parentLikeBtn">
+                <span>${parentHasLiked ? "❤️" : "🤍"}</span>
+                <span id="parentLikeCount">${parentLikes}</span>
+              </button>
+              <span class="oc-meta">${replies.length} repl${replies.length !== 1 ? "ies" : "y"}</span>
+            </div>
           </div>
         `;
 
-        // Заголовок
-        document.getElementById("repliesTitle").textContent = `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}`;
+        // Лайк на главный коммент
+        document.getElementById("parentLikeBtn").addEventListener("click", async () => {
+          if (!currentUser) { alert("Please login to like."); return; }
+          const comments = await getAll();
+          const idx = comments.findIndex(x => x.id === commentId);
+          if (idx === -1) return;
+          const lb = comments[idx].likedBy || [];
+          if (lb.includes(currentUser.email)) {
+            comments[idx].likedBy = lb.filter(e => e !== currentUser.email);
+            comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
+          } else {
+            comments[idx].likedBy = [...lb, currentUser.email];
+            comments[idx].likes = (comments[idx].likes || 0) + 1;
+          }
+          await sb.from("reports").update({ comments }).eq("id", reportId);
+          await loadPage();
+        });
 
-        // Список ответов
+        document.getElementById("repliesTitle").textContent =
+          `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}`;
+
         const list = document.getElementById("repliesList");
         if (!replies.length) {
           list.innerHTML = `<div class="empty-replies">No replies yet. Be the first!</div>`;
@@ -263,31 +328,37 @@
             const likedBy = r.likedBy || [];
             const hasLiked = currentUser && likedBy.includes(currentUser.email);
 
+            // Находим на кого отвечал
+            const replyTarget = r.parentId !== commentId
+              ? allComments.find(x => x.id === r.parentId)
+              : null;
+
             const div = document.createElement("div");
             div.className = "reply-item";
             div.innerHTML = `
-              <div class="comment-avatar">${(r.author || "A").charAt(0).toUpperCase()}</div>
+              <div class="reply-avatar">${(r.author || "A").charAt(0).toUpperCase()}</div>
               <div class="reply-body">
                 <div class="reply-header">
                   <span class="reply-author">${r.author || "Anonymous"}</span>
+                  ${replyTarget ? `<span class="reply-to">→ @${replyTarget.author}</span>` : ""}
                   <span class="reply-time">${formatTime(r.createdAt)}</span>
-                  ${isOwner ? `<button class="reply-delete" data-id="${r.id}">✕</button>` : ""}
+                  ${isOwner ? `<button class="reply-delete">✕</button>` : ""}
                 </div>
                 <div class="reply-text">${r.text || ""}</div>
                 <div class="reply-actions">
-                  <button class="comment-like ${hasLiked ? "liked" : ""}" data-id="${r.id}">
+                  <button class="comment-like ${hasLiked ? "liked" : ""}">
                     <span class="like-icon">${hasLiked ? "❤️" : "🤍"}</span>
                     <span class="like-count">${likes}</span>
                   </button>
+                  <button class="reply-btn">↩ Reply</button>
                 </div>
               </div>
             `;
 
-            // Лайк
+            // Лайк ответа
             div.querySelector(".comment-like").addEventListener("click", async () => {
               if (!currentUser) { alert("Please login to like."); return; }
-              const { data: fresh } = await sb.from("reports").select("comments").eq("id", reportId).single();
-              const comments = Array.isArray(fresh?.comments) ? fresh.comments : [];
+              const comments = await getAll();
               const idx = comments.findIndex(x => x.id === r.id);
               if (idx === -1) return;
               const lb = comments[idx].likedBy || [];
@@ -302,14 +373,27 @@
               await loadPage();
             });
 
+            // Ответить на ответ
+            div.querySelector(".reply-btn").addEventListener("click", () => {
+              replyingToId = r.id;
+              replyingToAuthor = r.author;
+              const label = document.getElementById("replyingToLabel");
+              label.textContent = `↩ Replying to @${r.author}`;
+              label.style.display = "block";
+              const input = document.getElementById("replyInput");
+              input.placeholder = `Reply to @${r.author}...`;
+              input.focus();
+            });
+
             // Удаление
             const delBtn = div.querySelector(".reply-delete");
             if (delBtn) {
               delBtn.addEventListener("click", async () => {
                 if (!confirm("Delete this reply?")) return;
-                const { data: fresh } = await sb.from("reports").select("comments").eq("id", reportId).single();
-                const comments = Array.isArray(fresh?.comments) ? fresh.comments : [];
-                await sb.from("reports").update({ comments: comments.filter(x => x.id !== r.id) }).eq("id", reportId);
+                const comments = await getAll();
+                await sb.from("reports").update({
+                  comments: comments.filter(x => x.id !== r.id)
+                }).eq("id", reportId);
                 await loadPage();
               });
             }
@@ -328,11 +412,10 @@
         const text = input.value.trim();
         if (!text) return;
 
-        const { data: fresh } = await sb.from("reports").select("comments").eq("id", reportId).single();
-        const comments = Array.isArray(fresh?.comments) ? fresh.comments : [];
+        const comments = await getAll();
         comments.push({
           id: Date.now().toString(),
-          parentId: commentId,
+          parentId: replyingToId,
           author: userName,
           text,
           createdAt: new Date().toISOString(),
@@ -341,6 +424,14 @@
         });
         await sb.from("reports").update({ comments }).eq("id", reportId);
         input.value = "";
+
+        // Сброс — снова отвечаем на главный
+        replyingToId = commentId;
+        replyingToAuthor = null;
+        const label = document.getElementById("replyingToLabel");
+        label.style.display = "none";
+        input.placeholder = "Write a reply...";
+
         await loadPage();
       };
 
