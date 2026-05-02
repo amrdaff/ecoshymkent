@@ -752,3 +752,7 @@ input:focus {
 .btn-send-comment:hover { background: var(--primary-dark); }
 
 .replies-container { margin-top: 0.25rem; }
+
+.comment-reply .comment-reply {
+  margin-left: 0;
+}
