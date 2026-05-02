@@ -753,6 +753,8 @@ input:focus {
 
 .replies-container { margin-top: 0.25rem; }
 
-.comment-reply .comment-reply {
-  margin-left: 0;
+.comment-reply {
+  margin-left: 0 !important;
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
 }
