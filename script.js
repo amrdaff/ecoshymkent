@@ -91,16 +91,15 @@
     return Array.isArray(data?.comments) ? data.comments : [];
   }
 
-  // Рендер одного комментария
-  function renderComment(c, reportId, allComments, depth = 0) {
+  function renderComment(c, reportId, allComments) {
     const isOwner = currentUser && (currentUser.user_metadata?.full_name === c.author || currentUser.email === c.author);
     const likes = c.likes || 0;
     const likedBy = c.likedBy || [];
     const hasLiked = currentUser && likedBy.includes(currentUser.email);
-    const replies = allComments.filter(r => r.parentId === c.id);
+    const replyCount = allComments.filter(r => r.parentId === c.id).length;
 
     const div = document.createElement("div");
-    div.className = "comment-item" + (depth > 0 ? " comment-reply" : "");
+    div.className = "comment-item";
     div.dataset.commentId = c.id;
 
     div.innerHTML = `
@@ -117,21 +116,12 @@
             <span class="like-icon">${hasLiked ? "❤️" : "🤍"}</span>
             <span class="like-count">${likes}</span>
           </button>
-          <button class="comment-reply-btn" data-id="${c.id}" data-author="${c.author}">↩ Reply</button>
+          <a class="comment-reply-btn" href="comments.html?report=${reportId}&comment=${c.id}">
+            ↩ Reply${replyCount > 0 ? ` · <span class="reply-count">${replyCount} repl${replyCount === 1 ? "y" : "ies"}</span>` : ""}
+          </a>
         </div>
-        <div class="reply-input-wrap" id="reply-wrap-${c.id}" style="display:none">
-          <input type="text" class="reply-input" placeholder="Reply to ${c.author}..." />
-          <button class="reply-send btn-send-comment">Send</button>
-        </div>
-        <div class="replies-container" id="replies-${c.id}"></div>
       </div>
     `;
-
-    // Рендерим ответы
-    const repliesContainer = div.querySelector(`#replies-${c.id}`);
-    replies.forEach(reply => {
-      repliesContainer.appendChild(renderComment(reply, reportId, allComments, depth + 1));
-    });
 
     // Лайк
     div.querySelector(".comment-like").addEventListener("click", async () => {
@@ -152,48 +142,19 @@
       await renderReports();
     });
 
-    // Reply toggle
-    div.querySelector(".comment-reply-btn").addEventListener("click", () => {
-      const wrap = div.querySelector(`#reply-wrap-${c.id}`);
-      wrap.style.display = wrap.style.display === "none" ? "flex" : "none";
-      if (wrap.style.display === "flex") wrap.querySelector("input").focus();
-    });
-
-    // Send reply
-    div.querySelector(".reply-send").addEventListener("click", async () => {
-      if (!currentUser) { alert("Please login to reply."); return; }
-      const input = div.querySelector(".reply-input");
-      const text = input.value.trim();
-      if (!text) return;
-      const comments = await getComments(reportId);
-      comments.push({
-        id: Date.now().toString(),
-        parentId: c.id,
-        author: currentUser.user_metadata?.full_name || "Anonymous",
-        text,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        likedBy: [],
-      });
-      await saveComments(reportId, comments);
-      await renderReports();
-    });
-
-    // Delete
+    // Удаление
     const delBtn = div.querySelector(".comment-delete");
     if (delBtn) {
       delBtn.addEventListener("click", async () => {
-        if (!confirm("Delete this comment?")) return;
+        if (!confirm("Delete this comment and all its replies?")) return;
         const comments = await getComments(reportId);
-        // Удаляем комментарий и все его ответы
         const toDelete = new Set();
         const collect = (id) => {
           toDelete.add(id);
           comments.filter(x => x.parentId === id).forEach(x => collect(x.id));
         };
         collect(c.id);
-        const updated = comments.filter(x => !toDelete.has(x.id));
-        await saveComments(reportId, updated);
+        await saveComments(reportId, comments.filter(x => !toDelete.has(x.id)));
         await renderReports();
       });
     }
@@ -248,20 +209,17 @@
         </div>
       `;
 
-      // Рендерим комментарии
       const commentsContainer = item.querySelector(`#comments-${report.id}`);
       topComments.forEach(c => {
         commentsContainer.appendChild(renderComment(c, report.id, allComments));
       });
 
-      // Status change
       item.querySelector(".status-select").addEventListener("change", async (e) => {
         await updateReportStatus(Number(report.id), e.target.value);
         await renderReports();
         await renderAchievements();
       });
 
-      // New comment
       item.querySelector(".new-comment-send").addEventListener("click", async () => {
         if (!currentUser) { alert("Please login to comment."); return; }
         const input = item.querySelector(".new-comment-input");
@@ -282,7 +240,6 @@
         await renderReports();
       });
 
-      // Enter key для нового комментария
       item.querySelector(".new-comment-input").addEventListener("keydown", async (e) => {
         if (e.key === "Enter") item.querySelector(".new-comment-send").click();
       });
