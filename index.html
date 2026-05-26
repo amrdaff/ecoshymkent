@@ -252,6 +252,11 @@
         document.getElementById("navRegister").style.display = "none";
         document.getElementById("navProfile").style.display = "";
         document.getElementById("navLogout").style.display = "";
+        const heroJoin = document.getElementById("heroJoinBtn");
+        if (heroJoin) {
+          heroJoin.href = "profile.html";
+          heroJoin.textContent = "My Dashboard";
+        }
       }
       document.getElementById("navLogout").addEventListener("click", async (e) => {
         e.preventDefault();
