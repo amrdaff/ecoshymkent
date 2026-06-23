@@ -213,12 +213,7 @@ let replyingToAuthor = null;
 
 function escapeHTML(str) {
   if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function formatTime(ts) {
@@ -299,25 +294,26 @@ window.addEventListener("load", async () => {
       </div>
     `;
 
-    document.getElementById("parentLikeBtn").addEventListener("click", async () => {
+    document.getElementById("parentLikeBtn").addEventListener("click", async (e) => {
       if (!currentUser) { alert("Please login to like."); return; }
+      e.currentTarget.disabled = true;
       const comments = await getAll();
       const idx = comments.findIndex(x => x.id === commentId);
-      if (idx === -1) return;
-      const lb = comments[idx].likedBy || [];
-      if (lb.includes(currentUser.email)) {
-        comments[idx].likedBy = lb.filter(e => e !== currentUser.email);
-        comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
-      } else {
-        comments[idx].likedBy = [...lb, currentUser.email];
-        comments[idx].likes = (comments[idx].likes || 0) + 1;
+      if (idx !== -1) {
+        const lb = comments[idx].likedBy || [];
+        if (lb.includes(currentUser.email)) {
+          comments[idx].likedBy = lb.filter(em => em !== currentUser.email);
+          comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
+        } else {
+          comments[idx].likedBy = [...lb, currentUser.email];
+          comments[idx].likes = (comments[idx].likes || 0) + 1;
+        }
+        await sb.from("reports").update({ comments }).eq("id", reportId);
       }
-      await sb.from("reports").update({ comments }).eq("id", reportId);
       await loadPage();
     });
 
-    document.getElementById("repliesTitle").textContent =
-      `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}`;
+    document.getElementById("repliesTitle").textContent = `${replies.length} Repl${replies.length !== 1 ? "ies" : "y"}`;
 
     const list = document.getElementById("repliesList");
     if (!replies.length) {
@@ -329,10 +325,7 @@ window.addEventListener("load", async () => {
         const likes = r.likes || 0;
         const likedBy = r.likedBy || [];
         const hasLiked = currentUser && likedBy.includes(currentUser.email);
-
-        const replyTarget = r.parentId !== commentId
-          ? allComments.find(x => x.id === r.parentId)
-          : null;
+        const replyTarget = r.parentId !== commentId ? allComments.find(x => x.id === r.parentId) : null;
 
         const div = document.createElement("div");
         div.className = "reply-item";
@@ -356,20 +349,22 @@ window.addEventListener("load", async () => {
           </div>
         `;
 
-        div.querySelector(".comment-like").addEventListener("click", async () => {
+        div.querySelector(".comment-like").addEventListener("click", async (e) => {
           if (!currentUser) { alert("Please login to like."); return; }
+          e.currentTarget.disabled = true;
           const comments = await getAll();
           const idx = comments.findIndex(x => x.id === r.id);
-          if (idx === -1) return;
-          const lb = comments[idx].likedBy || [];
-          if (lb.includes(currentUser.email)) {
-            comments[idx].likedBy = lb.filter(e => e !== currentUser.email);
-            comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
-          } else {
-            comments[idx].likedBy = [...lb, currentUser.email];
-            comments[idx].likes = (comments[idx].likes || 0) + 1;
+          if (idx !== -1) {
+            const lb = comments[idx].likedBy || [];
+            if (lb.includes(currentUser.email)) {
+              comments[idx].likedBy = lb.filter(em => em !== currentUser.email);
+              comments[idx].likes = Math.max(0, (comments[idx].likes || 1) - 1);
+            } else {
+              comments[idx].likedBy = [...lb, currentUser.email];
+              comments[idx].likes = (comments[idx].likes || 0) + 1;
+            }
+            await sb.from("reports").update({ comments }).eq("id", reportId);
           }
-          await sb.from("reports").update({ comments }).eq("id", reportId);
           await loadPage();
         });
 
@@ -386,8 +381,9 @@ window.addEventListener("load", async () => {
 
         const delBtn = div.querySelector(".reply-delete");
         if (delBtn) {
-          delBtn.addEventListener("click", async () => {
+          delBtn.addEventListener("click", async (e) => {
             if (!confirm("Delete this reply?")) return;
+            e.currentTarget.disabled = true;
             const comments = await getAll();
             await sb.from("reports").update({
               comments: comments.filter(x => x.id !== r.id)
@@ -395,7 +391,6 @@ window.addEventListener("load", async () => {
             await loadPage();
           });
         }
-
         list.appendChild(div);
       });
     }
@@ -403,11 +398,14 @@ window.addEventListener("load", async () => {
 
   await loadPage();
 
-  const sendReply = async () => {
+  const sendReply = async (e) => {
     if (!currentUser) { alert("Please login to reply."); return; }
+    const btn = document.getElementById("replySendBtn");
+    btn.disabled = true;
+
     const input = document.getElementById("replyInput");
     const text = input.value.trim();
-    if (!text) return;
+    if (!text) { btn.disabled = false; return; }
 
     const comments = await getAll();
     comments.push({
@@ -419,9 +417,9 @@ window.addEventListener("load", async () => {
       likes: 0,
       likedBy: [],
     });
+    
     await sb.from("reports").update({ comments }).eq("id", reportId);
     input.value = "";
-
     replyingToId = commentId;
     replyingToAuthor = null;
     const label = document.getElementById("replyingToLabel");
@@ -429,6 +427,7 @@ window.addEventListener("load", async () => {
     input.placeholder = "Write a reply...";
 
     await loadPage();
+    btn.disabled = false;
   };
 
   document.getElementById("replySendBtn").addEventListener("click", sendReply);
