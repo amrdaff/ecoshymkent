@@ -74,9 +74,13 @@ if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
 return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+// ИСПРАВЛЕНИЕ 3: Лимит загрузки в 20 последних репортов
 async function fetchReports() {
 if (!sb) return [];
-const { data, error } = await sb.from("reports").select("*").order("created_at", { ascending: false });
+const { data, error } = await sb.from("reports")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .limit(20); 
 if (error) { console.error("Fetch error:", error.message); return []; }
 return data || [];
 }
@@ -132,11 +136,16 @@ div.innerHTML = `
   </div>
 `;
 
-div.querySelector(".comment-like").addEventListener("click", async () => {
+// ИСПРАВЛЕНИЕ 4 (частично): Блокировка кнопки лайка при клике
+div.querySelector(".comment-like").addEventListener("click", async (e) => {
   if (!currentUser) { alert("Please login to like comments."); return; }
-  const comments = await getComments(reportId);
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  
+  const comments = await getComments(reportId); // Запрашиваем свежие данные перед записью
   const idx = comments.findIndex(x => x.id === c.id);
-  if (idx === -1) return;
+  if (idx === -1) { btn.disabled = false; return; }
+  
   const email = currentUser.email;
   const lb = comments[idx].likedBy || [];
   if (lb.includes(email)) {
@@ -152,8 +161,9 @@ div.querySelector(".comment-like").addEventListener("click", async () => {
 
 const delBtn = div.querySelector(".comment-delete");
 if (delBtn) {
-  delBtn.addEventListener("click", async () => {
+  delBtn.addEventListener("click", async (e) => {
     if (!confirm("Delete this comment and all its replies?")) return;
+    e.currentTarget.disabled = true;
     const comments = await getComments(reportId);
     const toDelete = new Set();
     const collect = (id) => {
@@ -185,7 +195,24 @@ reports.forEach((report) => {
   const allComments = Array.isArray(report.comments) ? report.comments : [];
   const topComments = allComments.filter(c => !c.parentId);
 
-  const safePhotoSrc = report.photo && report.photo.startsWith("data:image/") ? report.photo : "";
+  const safePhotoSrc = report.photo && (report.photo.startsWith("http") || report.photo.startsWith("data:image/")) ? report.photo : "";
+
+  // ИСПРАВЛЕНИЕ 2: Проверка, является ли текущий юзер автором
+  const isAuthor = currentUser && currentUser.user_metadata?.full_name === report.reporter;
+  let statusHtml = `<span class="badge ${statusClass}">Status: ${String(status).replace("_", " ")}</span>`;
+  
+  // Показываем выпадающий список только автору
+  if (isAuthor) {
+    statusHtml = `
+      <label><span class="badge">Update status</span>
+        <select class="status-select" data-id="${report.id}">
+          <option value="open" ${status === "open" ? "selected" : ""}>Open</option>
+          <option value="in_progress" ${status === "in_progress" ? "selected" : ""}>In progress</option>
+          <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
+        </select>
+      </label>
+    `;
+  }
 
   item.innerHTML = `
     <strong>${escapeHTML(report.location || "Unknown location")}</strong>
@@ -194,16 +221,10 @@ reports.forEach((report) => {
     ${safePhotoSrc ? `<img class="report-media" src="${safePhotoSrc}" alt="Report photo">` : ""}
     <div class="report-meta">
       <span class="badge">By: ${escapeHTML(report.reporter || "Anonymous")}</span>
-      <span class="badge ${statusClass}">Status: ${String(status).replace("_", " ")}</span>
+      ${!isAuthor ? statusHtml : ""}
     </div>
     <div class="report-actions">
-      <label><span class="badge">Update status</span>
-        <select class="status-select" data-id="${report.id}">
-          <option value="open" ${status === "open" ? "selected" : ""}>Open</option>
-          <option value="in_progress" ${status === "in_progress" ? "selected" : ""}>In progress</option>
-          <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
-        </select>
-      </label>
+      ${isAuthor ? statusHtml : ""}
     </div>
     <div class="comments-section">
       <div class="comments-header">
@@ -223,18 +244,26 @@ reports.forEach((report) => {
     commentsContainer.appendChild(renderComment(c, report.id, allComments));
   });
 
-  item.querySelector(".status-select").addEventListener("change", async (e) => {
-    await updateReportStatus(Number(report.id), e.target.value);
-    await renderReports();
-    await renderAchievements();
-  });
+  const selectEl = item.querySelector(".status-select");
+  if (selectEl) {
+    selectEl.addEventListener("change", async (e) => {
+      await updateReportStatus(Number(report.id), e.target.value);
+      await renderReports();
+      await renderAchievements();
+    });
+  }
 
-  item.querySelector(".new-comment-send").addEventListener("click", async () => {
+  // ИСПРАВЛЕНИЕ 4: Блокировка кнопки отправки и запрос свежих данных (защита от затирания комментов)
+  item.querySelector(".new-comment-send").addEventListener("click", async (e) => {
     if (!currentUser) { alert("Please login to comment."); return; }
+    const btn = e.currentTarget;
+    btn.disabled = true; // блокируем от двойного клика
+
     const input = item.querySelector(".new-comment-input");
     const text = input.value.trim();
-    if (!text) return;
-    const comments = await getComments(report.id);
+    if (!text) { btn.disabled = false; return; }
+    
+    const comments = await getComments(report.id); // Запрашиваем перед самой вставкой
     comments.push({
       id: Date.now().toString(),
       parentId: null,
@@ -244,9 +273,11 @@ reports.forEach((report) => {
       likes: 0,
       likedBy: [],
     });
+    
     await saveComments(report.id, comments);
     input.value = "";
     await renderReports();
+    btn.disabled = false;
   });
 
   item.querySelector(".new-comment-input").addEventListener("keydown", async (e) => {
@@ -285,36 +316,65 @@ if (reportForm) {
 reportForm.addEventListener("submit", async (event) => {
 event.preventDefault();
 if (!sb) { alert("Supabase is not initialized."); return; }
+
 const locationInput = document.getElementById("locationName");
 const addressInput = document.getElementById("locationAddress");
 const descInput = document.getElementById("locationDesc");
 const photoInput = document.getElementById("locationPhoto");
 const reporterInput = document.getElementById("reporterName");
+const submitBtn = reportForm.querySelector("button[type='submit']");
 
-  const saveReport = async (photoData) => {
-    const fallback = currentUser?.user_metadata?.full_name || "Anonymous";
-    const payload = {
-      location: (locationInput?.value || "").trim(),
-      address: (addressInput?.value || "").trim(),
-      description: (descInput?.value || "").trim(),
-      reporter: (reporterInput?.value || "").trim() || fallback,
-      status: "open", photo: photoData || "", comments: [],
-    };
-    const { error } = await sb.from("reports").insert([payload]);
-    if (error) { alert("Error: " + error.message); return; }
+// ИСПРАВЛЕНИЕ 1: Загрузка фото в Storage
+const saveReport = async (file) => {
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Uploading...";
+  const fallback = currentUser?.user_metadata?.full_name || "Anonymous";
+  let photoUrl = "";
+
+  if (file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    // Загружаем файл в корзину 'photos'
+    const { data: uploadData, error: uploadError } = await sb.storage.from('photos').upload(fileName, file);
+    
+    if (uploadError) {
+      alert("Ошибка загрузки фото: " + uploadError.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Report";
+      return;
+    }
+    // Получаем прямую публичную ссылку
+    const { data: publicUrlData } = sb.storage.from('photos').getPublicUrl(fileName);
+    photoUrl = publicUrlData.publicUrl;
+  }
+
+  const payload = {
+    location: (locationInput?.value || "").trim(),
+    address: (addressInput?.value || "").trim(),
+    description: (descInput?.value || "").trim(),
+    reporter: (reporterInput?.value || "").trim() || fallback,
+    status: "open", 
+    photo: photoUrl, // Теперь тут нормальный короткий URL
+    comments: [],
+  };
+
+  const { error } = await sb.from("reports").insert([payload]);
+  
+  if (error) { 
+    alert("Error: " + error.message); 
+  } else {
     reportForm.reset();
     await renderReports();
     await renderAchievements();
-  };
-
-  const file = photoInput?.files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = () => saveReport(reader.result);
-    reader.readAsDataURL(file);
-  } else {
-    await saveReport("");
   }
+  
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Submit Report";
+};
+
+const file = photoInput?.files?.[0];
+await saveReport(file);
 });
 }
 
