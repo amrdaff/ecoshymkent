@@ -239,7 +239,6 @@ padding: 1.2rem;
   </div>
 
   <div class="tab-panel" id="tab-settings">
-
     <div class="settings-card">
       <h3>👤 Display Name</h3>
       <div class="settings-form">
@@ -273,7 +272,6 @@ padding: 1.2rem;
       <p style="font-size:0.88rem;color:var(--muted);margin:0 0 0.75rem">Logging out will end your current session.</p>
       <button class="btn btn-danger" id="logoutBtn2">Logout</button>
     </div>
-
   </div>
 
 </div>
@@ -315,6 +313,7 @@ window.addEventListener("load", async () => {
   const { data: { user }, error } = await sb.auth.getUser();
   if (error || !user) { window.location.href = "login.html"; return; }
 
+  // Жесткая синхронизация имени
   const name = user.user_metadata?.full_name || "User";
   const email = user.email || "";
   const joined = new Date(user.created_at).toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" });
@@ -340,10 +339,17 @@ window.addEventListener("load", async () => {
       const status = r.status || "open";
       const statusClass = status === "completed" ? "status-completed" : status === "in_progress" ? "status-progress" : "status-open";
       const date = new Date(r.created_at).toLocaleDateString("en-GB");
+      
+      // ИСПРАВЛЕНИЕ: Добавлен вывод фото в профиле
+      const safePhotoSrc = r.photo || ""; 
+
       return `
         <div class="profile-report-item">
           <strong>${escapeHTML(r.location || "Unknown location")}</strong>
           <p>${escapeHTML(r.address || "")}${r.description ? " — " + escapeHTML(r.description) : ""}</p>
+          
+          ${safePhotoSrc ? `<img src="${safePhotoSrc}" alt="Report photo" style="width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-top:0.6rem; border: 1px solid var(--border);">` : ""}
+          
           <div style="margin-top:0.4rem;display:flex;gap:0.4rem;flex-wrap:wrap">
             <span class="badge ${statusClass}">Status: ${status.replace("_", " ")}</span>
             <span class="badge">${date}</span>
@@ -366,7 +372,7 @@ window.addEventListener("load", async () => {
       msg.textContent = "Error: " + error.message;
     } else {
       msg.className = "settings-msg ok";
-      msg.textContent = "Name updated successfully!";
+      msg.textContent = "Name updated successfully! (Note: Old reports won't auto-update your new name)";
       document.getElementById("profileName").textContent = newName;
       document.getElementById("profileAvatar").textContent = newName.charAt(0).toUpperCase();
     }
