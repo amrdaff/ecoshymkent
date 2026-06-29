@@ -324,7 +324,6 @@ const submitBtn = reportForm.querySelector("button[type='submit']");
 
 const file = photoInput?.files?.[0];
 
-// ЗАЩИТА: Запрещаем гостям грузить фото (база всё равно отклонит, так хоть с понятной ошибкой)
 if (file && !currentUser) {
   alert("Только зарегистрированные пользователи могут прикреплять фото! Пожалуйста, войдите в аккаунт.");
   return;
@@ -339,7 +338,7 @@ const saveReport = async (file) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Uploading...";
   
-  // Жестко привязываем имя, чтобы 100% совпадало с профилем
+
   const exactProfileName = currentUser?.user_metadata?.full_name || "User";
   const reportAuthor = currentUser ? exactProfileName : ((reporterInput?.value || "").trim() || "Anonymous");
 
